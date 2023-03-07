@@ -209,7 +209,7 @@ func forkRun(opts *ForkOptions) error {
 				cs.Bold(ghrepo.FullName(forkedRepo)),
 				"already exists")
 		} else {
-			fmt.Fprintf(stderr, "%s already exists", ghrepo.FullName(forkedRepo))
+			fmt.Fprintf(stderr, "%s already exists\n", ghrepo.FullName(forkedRepo))
 		}
 	} else {
 		if connectedToTerminal {
@@ -326,7 +326,7 @@ func forkRun(opts *ForkOptions) error {
 		if cloneDesired {
 			// Allow injecting alternative BackOff in tests.
 			if opts.BackOff == nil {
-				bo := backoff.NewConstantBackOff(3 * time.Second)
+				bo := backoff.NewConstantBackOff(2 * time.Second)
 				opts.BackOff = bo
 			}
 
