@@ -58,8 +58,13 @@ func NewCmdRefresh(f *cmdutil.Factory, runF func(*RefreshOptions) error) *cobra.
 		Short: "Refresh stored authentication credentials",
 		Long: heredoc.Doc(`Expand or fix the permission scopes for stored credentials.
 
-			The --scopes flag accepts a comma separated list of scopes you want your gh credentials to have. If
-			absent, this command ensures that gh has access to a minimum set of scopes.
+			The --scopes flag accepts a comma separated list of scopes you want
+			your gh credentials to have. If no scopes are provided, the command
+			maintains previously added scopes.
+
+			The command can only add additional scopes, but not remove previously
+			added ones. To reset scopes to the default minimum set of scopes, you
+			will need to create new credentials using the auth login command.
 		`),
 		Example: heredoc.Doc(`
 			$ gh auth refresh --scopes write:org,read:public_key
@@ -134,7 +139,7 @@ func refreshRun(opts *RefreshOptions) error {
 	}
 
 	var additionalScopes []string
-	if oldToken, _ := authCfg.Token(hostname); oldToken != "" {
+	if oldToken, source := authCfg.Token(hostname); oldToken != "" {
 		if oldScopes, err := shared.GetScopes(opts.HttpClient, hostname, oldToken); err == nil {
 			for _, s := range strings.Split(oldScopes, ",") {
 				s = strings.TrimSpace(s)
@@ -142,6 +147,13 @@ func refreshRun(opts *RefreshOptions) error {
 					additionalScopes = append(additionalScopes, s)
 				}
 			}
+		}
+
+		// If previous token was stored in secure storage assume
+		// user wants to continue storing it there even if not
+		// explicitly stated with the secure storage flag.
+		if source == "keyring" {
+			opts.SecureStorage = true
 		}
 	}
 
